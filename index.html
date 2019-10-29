@@ -296,6 +296,76 @@
 
     <!-- Custom scripts for this template -->
     <script src="js/grayscale.js"></script>
+	  
+    <script type="text/javascript" id="inmoment-intercept" async> (function() {
+	if (window.IMI === undefined){ window.IMI = {}; }
+	
+	var coerceBoolean = function(value){
+		try {
+			return JSON.parse(value);
+		}catch (ex){
+			return undefined;
+		}		
+	};
+	
+    var interceptFn = function(interceptHost, orgId, key, isTesting, loadTestCustomJS, interceptClientVersion) {
+    	var url = '//' + interceptHost + '/intercept/v1/init/' + orgId + '/' + key + '?testing=' + isTesting + '&loadTestCustomJS=' + loadTestCustomJS + '&interceptClientVersion=' + interceptClientVersion;
+    	
+        this.go = function() {
+			if (document.body) {
+				var scriptEl = document.createElement("script");
+				scriptEl.type = "text/javascript";
+				scriptEl.async = true;
+				scriptEl.src = url;
+				document.body.appendChild(scriptEl);
+			}else if (isTesting){
+				 this.getInterceptsOnPageLoad();
+			}
+            
+        };
+		
+        this.start = function() {
+        	if(navigator.userAgent.indexOf('MSIE') >=0 && navigator.userAgent.indexOf('MSIE 11') < 0) {
+        		return;
+        	}
+        	
+            if(!isTesting){
+	             this.getInterceptsOnPageLoad();          
+            }else{
+        		this.go();
+        	}    
+        };
+		
+		 this.getInterceptsOnPageLoad = function() {
+		  var _interceptFn = this;
+		   window.addEventListener("load", function() {_interceptFn.go()}, false);
+		 }
+    };
+
+    try {
+		var configExists = IMI.Config !== undefined;
+		
+		var testingOverride = localStorage.getItem('IM_loadInterceptsInTest') ? localStorage.getItem('IM_loadInterceptsInTest') : configExists ? IMI.Config.testing : undefined;
+		var loadTestCustomJSOverride = localStorage.getItem('IM_loadTestCustomJS') ? localStorage.getItem('IM_loadTestCustomJS') : configExists ? IMI.Config.loadTestCustomJS : undefined;
+		var interceptClientVersion = localStorage.getItem('IM_interceptClientVersion') ? localStorage.getItem('IM_interceptClientVersion') : configExists ? IMI.Config.interceptClientVersion : undefined;
+		
+		testingOverride = coerceBoolean(testingOverride);
+		loadTestCustomJSOverride = coerceBoolean(loadTestCustomJSOverride);
+
+		IMI.Config = {
+        	host: 'dispawsusva.inmoment.com',
+        	orgId: 1289,
+        	key: 'AuoRqYWjPAKAtjI+qwW7qQ==',
+        	testing: testingOverride!== undefined ? testingOverride: false,
+        	loadTestCustomJS: loadTestCustomJSOverride!== undefined ? loadTestCustomJSOverride: false,
+        	interceptClientVersion: interceptClientVersion!== undefined ? interceptClientVersion: 'null'
+    	};
+		
+		(new interceptFn(IMI.Config.host, IMI.Config.orgId, IMI.Config.key, IMI.Config.testing, IMI.Config.loadTestCustomJS, IMI.Config.interceptClientVersion)).start()
+    } catch (ex) {
+		console.log(ex);
+	}
+})();</script>
 
   </body>
 
